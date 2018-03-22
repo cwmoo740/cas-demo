@@ -1,0 +1,97 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        jcenter()
+    }
+    dependencies {
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:${project.'springboot.version'}"
+    }
+}
+
+apply plugin: 'org.springframework.boot'
+apply from: 'http://dl.bintray.com/scalding/generic/waroverlay.gradle'
+apply from: 'https://raw.githubusercontent.com/apereo/cas/5.2.x/gradle/overrides.gradle'
+apply plugin: 'idea'
+
+idea {
+    module {
+        downloadJavadoc = true
+        downloadSources = true
+    }
+}
+
+springBoot {
+    mainClass = "org.springframework.boot.loader.WarLauncher"
+}
+
+bootRepackage {
+    mainClass = "org.apereo.cas.web.CasWebApplication"
+    executable = false
+    excludeDevtools = false
+}
+
+bootRun {
+    addResources = true
+    classpath = sourceSets.main.compileClasspath
+}
+
+repositories {
+    mavenLocal()
+    jcenter()
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+    maven { url 'https://build.shibboleth.net/nexus/content/repositories/releases/' }
+}
+
+dependencies {
+    compile "org.apereo.cas:cas-server-webapp-tomcat:${project.'cas.version'}@war"
+    compile group: 'org.apereo.cas', name: 'cas-server-support-json-service-registry', version: "${project.'cas.version'}"
+    compile group: 'org.apereo.cas', name: 'cas-server-support-jdbc-authentication', version: "${project.'cas.version'}"
+}
+
+task prepareCopyConfig(type: Delete) {
+    delete fileTree('/etc/cas') {
+        include '**/*'
+    }
+}
+
+task copyConfig(type: Copy, description: "Copy CAS configuration over to /etc/cas/config") {
+    dependsOn prepareCopyConfig
+    from "${project.rootDir}/etc/cas"
+    into '/etc/cas'
+
+    println "Copied configuration files into /etc/cas/config"
+}
+
+war {
+    dependsOn copyConfig
+    baseName 'cas'
+    includeWarJars = true
+    entryCompression = ZipEntryCompression.STORED
+}
+
+bootRun.dependsOn(copyConfig)
+
+task run(group: "build", description: "Run the CAS web application in embedded container mode") {
+    dependsOn copyConfig
+    dependsOn build
+    doLast {
+        def casRunArgs = Arrays.asList(project.'cas.run.jvmArgs'.split(" "))
+        javaexec {
+            main = "-jar"
+            jvmArgs = casRunArgs
+            args = ["build/libs/cas.war"]
+
+            logger.info "Started ${commandLine}"
+        }
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.6'
+}
+
+task casVersion() {
+    doFirst {
+        println "${project.'cas.version'}"
+    }
+}

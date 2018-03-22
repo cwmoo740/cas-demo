@@ -1,0 +1,16 @@
+{
+  "name": "cas",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "ssh://git@git.yodle.com:7999/~jyoung2/cas.git",
+  "license": "MIT",
+  "config": {
+    "port": 3000
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.16.3"
+  }
+}
