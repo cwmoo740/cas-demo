@@ -2,3 +2,5 @@
 .idea
 build
 cas.iml
+src/main/resources/application-*.properties
+ssl

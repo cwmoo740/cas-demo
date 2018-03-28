@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+OUT_DIR="src/main/resources"
+
+find "${OUT_DIR}" -name "application-*.properties" -delete
+
+for DIR in config/*/
+do
+    OUT_FILE="${OUT_DIR}/application-$(basename "${DIR}").properties"
+    SEARCH_PATH="${DIR}*.properties"
+    for file in ${SEARCH_PATH}
+    do
+        cat "${file}" | grep -Ev "^#" >> "${OUT_FILE}"
+    done
+done

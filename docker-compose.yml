@@ -1,19 +1,39 @@
-version: "3"
+version: "3.3"
 services:
   app:
     build: app
     environment:
       - PORT=8080
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
   postgres:
     build: postgres
     environment:
-      - POSTGRES_USER=cowmoo
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=db_user
+      - POSTGRES_PASSWORD=db_password
+      - POSTGRES_DB=authentication
     ports:
       - "5432:5432"
   nginx:
     build: nginx
+    depends_on:
+      - "cas"
     ports:
-      - "8080:8080"
+      - "80:80"
+      - "443:443"
+    secrets:
+      - cas-demo.key
+      - cas-demo.crt
+    networks:
+      default:
+        aliases:
+          - cas-demo.org
   cas:
     build: cas
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+secrets:
+  cas-demo.key:
+    file: ./ssl/cas-demo.key
+  cas-demo.crt:
+    file: ./ssl/cas-demo.crt

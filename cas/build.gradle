@@ -1,7 +1,7 @@
 buildscript {
     repositories {
         mavenLocal()
-        jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${project.'springboot.version'}"
@@ -37,48 +37,81 @@ bootRun {
 
 repositories {
     mavenLocal()
-    jcenter()
+    mavenCentral()
     maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
     maven { url 'https://build.shibboleth.net/nexus/content/repositories/releases/' }
 }
 
 dependencies {
+    compile group: 'javax.servlet', name: 'javax.servlet-api', version: '4.0.0'
     compile "org.apereo.cas:cas-server-webapp-tomcat:${project.'cas.version'}@war"
     compile group: 'org.apereo.cas', name: 'cas-server-support-json-service-registry', version: "${project.'cas.version'}"
     compile group: 'org.apereo.cas', name: 'cas-server-support-jdbc-authentication', version: "${project.'cas.version'}"
+    compile group: 'org.apereo.cas', name: 'cas-server-webapp-config-security', version: "${project.'cas.version'}"
+    compile group: 'org.apereo.cas', name: 'cas-server-support-cookie', version: "${project.'cas.version'}"
+    compile group: 'org.apereo.cas', name: 'cas-server-support-generic', version: "${project.'cas.version'}"
+    compile group: 'org.apereo.cas', name: 'cas-server-support-actions', version: "${project.'cas.version'}"
+    compile group: 'org.apereo.cas', name: 'cas-server-support-reports', version: "${project.'cas.version'}"
+    compile group: 'org.apereo.cas', name: 'cas-server-support-jdbc', version: "${project.'cas.version'}"
+    compile group: 'org.apereo.cas', name: 'cas-server-support-jdbc-drivers', version: "${project.'cas.version'}"
+    compile group: 'org.postgresql', name: 'postgresql', version: '42.2.2'
 }
 
-task prepareCopyConfig(type: Delete) {
-    delete fileTree('/etc/cas') {
-        include '**/*'
+task resolveDependencies {
+    setDescription "Resolves all projects dependencies from the repository."
+    setGroup "Build Server"
+
+    doLast {
+        project.buildscript.configurations.forEach { configuration ->
+            if (configuration.canBeResolved) {
+                configuration.resolve()
+            }
+        }
+
+        project.configurations.forEach { configuration ->
+            if (configuration.canBeResolved) {
+                configuration.resolve()
+            }
+        }
     }
 }
 
-task copyConfig(type: Copy, description: "Copy CAS configuration over to /etc/cas/config") {
-    dependsOn prepareCopyConfig
-    from "${project.rootDir}/etc/cas"
-    into '/etc/cas'
-
-    println "Copied configuration files into /etc/cas/config"
+task copyConfig(type: Exec, description: "Copy CAS configuration to src/main/resources") {
+    commandLine './scripts/config'
 }
 
+processResources.dependsOn(copyConfig)
+
 war {
-    dependsOn copyConfig
     baseName 'cas'
     includeWarJars = true
     entryCompression = ZipEntryCompression.STORED
 }
 
-bootRun.dependsOn(copyConfig)
-
 task run(group: "build", description: "Run the CAS web application in embedded container mode") {
-    dependsOn copyConfig
     dependsOn build
     doLast {
         def casRunArgs = Arrays.asList(project.'cas.run.jvmArgs'.split(" "))
+        println "${casRunArgs}"
         javaexec {
             main = "-jar"
             jvmArgs = casRunArgs
+            args = ["build/libs/cas.war"]
+
+            logger.info "Started ${commandLine}"
+        }
+    }
+}
+
+
+task debug(group: "build", description: "Debug the CAS web application in embedded mode on port 5005") {
+    dependsOn build
+    doLast {
+        def casDebugArgs = Arrays.asList(project.'cas.debug.jvmArgs'.split(" "))
+
+        javaexec {
+            main = "-jar";
+            jvmArgs = casDebugArgs
             args = ["build/libs/cas.war"]
 
             logger.info "Started ${commandLine}"

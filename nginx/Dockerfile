@@ -1,3 +1,3 @@
 FROM nginx:1
 
-COPY nginx.txt /etc/nginx/nginx.conf
+COPY docker.conf /etc/nginx/nginx.conf

@@ -1,0 +1,11 @@
+log
+.idea
+.gradle
+gradle
+build
+gradlew
+gradlew.bat
+.gitignore
+*.iml
+Dockerfile
+src/main/resources/application-*.properties

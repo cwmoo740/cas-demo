@@ -11,6 +11,8 @@
     "start": "node index.js"
   },
   "dependencies": {
+    "connect-cas": "^1.8.1",
+    "cookie-session": "^2.0.0-beta.3",
     "express": "^4.16.3"
   }
 }

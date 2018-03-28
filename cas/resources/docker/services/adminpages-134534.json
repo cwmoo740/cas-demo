@@ -1,0 +1,8 @@
+{
+  "@class" : "org.apereo.cas.services.RegexRegisteredService",
+  "serviceId" : "^https://cas-demo.org.*",
+  "name" : "administration pages",
+  "description": "enable access to the administration pages through CAS itself",
+  "id" : 134534,
+  "evaluationOrder" : 10
+}
